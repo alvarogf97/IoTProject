@@ -93,6 +93,8 @@ void setup() {
 
   display.flipScreenVertically();
   display.setFont(ArialMT_Plain_10);
+
+  framesDisplaySetUp();
 }
 
 void loop() {
@@ -137,12 +139,19 @@ void loop() {
   if(!screen_queue.isEmpty()){
     struct screen display = screen_queue.dequeue();
     /* Change the display type */
+    String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
+    String values[] = {lastTemperature,lastHumidity,lastWind};
+    drawAllDataFullScreen(headers, values);
   }
 
-  String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
-  String values[] = {lastTemperature,lastHumidity,lastWind};
-  drawAllDataFullScreen(headers, values);
-  
+  int remainingTimeBudget = ui.update();
+
+  if (remainingTimeBudget > 0) {
+    // You can do some work here
+    // Don't do stuff if you are below your
+    // time budget.
+    delay(remainingTimeBudget);
+  }
 }
 
 
@@ -260,4 +269,43 @@ void drawAllDataFullScreen(String headersData[],String values[]) {
     display.drawString(64, 40, headersData[2]);
     display.drawString(64, 50, values[2]);
     display.display();
+}
+
+void drawTemperatureFrame(OLEDDisplay display, OLEDDisplayUiState state, int16_t x, int16_t y) {
+  drawSingleDataFullScreen("Temperatura", "13 grados");
+}
+
+void drawHumidityFrame(OLEDDisplay display, OLEDDisplayUiState state, int16_t x, int16_t y) {
+  drawSingleDataFullScreen("Humedad", "13 %");
+}
+
+void drawWindFrame(OLEDDisplay display, OLEDDisplayUiState state, int16_t x, int16_t y) {
+  drawSingleDataFullScreen("Viento", "13 km/h");
+}
+
+FrameCallback frames[] = { drawTemperatureFrame, drawHumidityFrame, drawWindFrame};
+
+int frameCount = 3;
+
+void framesDisplaySetUp(){
+  ui.setTargetFPS(60);
+
+  ui.setActiveSymbol(activeSymbol);
+  ui.setInactiveSymbol(inactiveSymbol);
+
+  // Frame indicator at bottom of the screen
+  ui.setIndicatorPosition(BOTTOM);
+
+  // The first frame is in the left position
+  ui.setIndicatorDirection(LEFT_RIGHT);
+
+  // Animation from left to right
+  ui.setFrameAnimation(SLIDE_LEFT);
+
+  // Add frames
+  ui.setFrames(frames, frameCount);
+
+  ui.init();
+
+  display.flipScreenVertically();
 }
