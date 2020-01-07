@@ -48,13 +48,22 @@ Our JSON structures will be:
         "display_type": "string"
       }
     }
+  - ack topic:
+    {
+      "data": {
+        "ack_type": "string",
+        "last_value": "string"
+      }
+    }
 */
 const int sensor_json_capacity = JSON_OBJECT_SIZE(1)*3;
 const int display_json_capacity = JSON_OBJECT_SIZE(1)*2;
+const int ack_json_capacity = JSON_OBJECT_SIZE(1)*3;
 StaticJsonDocument<sensor_json_capacity> temperature_json_doc;
 StaticJsonDocument<sensor_json_capacity> humidity_json_doc;
 StaticJsonDocument<sensor_json_capacity> wind_json_doc;
-StaticJsonDocument<sensor_json_capacity> screen_json_doc;
+StaticJsonDocument<display_json_capacity> screen_json_doc;
+StaticJsonDocument<ack_json_capacity> ack_json_doc;
 
 /* Define Wifi settings */
 const char* wifi_ssid = "MASTER";
@@ -64,6 +73,7 @@ const char* wifi_password = "malagaiot";
 const char* mqtt_server = "iot.ac.uma.es";
 const char* mqtt_user = "master";
 const char* mqtt_pass = "malagaiot";
+const char* mqtt_topic_ack = "master/GRUPOE/ack"
 const char* mqtt_topic_temperature = "master/GRUPOE/temperatura";
 const char* mqtt_topic_humidity = "master/GRUPOE/humidity";
 const char* mqtt_topic_wind = "master/GRUPOE/wind";
