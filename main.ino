@@ -48,13 +48,20 @@ Our JSON structures will be:
         "display_type": "string"
       }
     }
+  - ack topic:
+    {
+      "data": {
+        "ack_type": "string",
+        "last_value": "string"
+      }
+    }
 */
 const int sensor_json_capacity = JSON_OBJECT_SIZE(1)*3;
 const int display_json_capacity = JSON_OBJECT_SIZE(1)*2;
 StaticJsonDocument<sensor_json_capacity> temperature_json_doc;
 StaticJsonDocument<sensor_json_capacity> humidity_json_doc;
 StaticJsonDocument<sensor_json_capacity> wind_json_doc;
-StaticJsonDocument<sensor_json_capacity> screen_json_doc;
+StaticJsonDocument<display_json_capacity> screen_json_doc;
 
 /* Define Wifi settings */
 const char* wifi_ssid = "MASTER";
@@ -63,7 +70,8 @@ const char* wifi_password = "malagaiot";
 /* Define MQTT settings */
 const char* mqtt_server = "iot.ac.uma.es";
 const char* mqtt_user = "master";
-const char* mqtt_pass = "malagaiot";
+const char* mqtt_pass = "malagaiot";  
+const char* mqtt_topic_ack = "master/GRUPOE/ack"
 const char* mqtt_topic_temperature = "master/GRUPOE/temperatura";
 const char* mqtt_topic_humidity = "master/GRUPOE/humidity";
 const char* mqtt_topic_wind = "master/GRUPOE/wind";
@@ -71,6 +79,7 @@ const char* mqtt_topic_screen = "master/GRUPOE/screen";
 const char* mqtt_topic_device = "master/GRUPOE/device";
 const char* will_message = "Godbye";
 char mqtt_message[100];
+char mqtt_ack[100];
 
 /* Define PubSub classes */
 WiFiClient espClient;
@@ -113,7 +122,7 @@ void loop() {
     Serial.print(temperature.value);
     Serial.println(temperature.magnitude);
     lastTemperature = String(temperature.value)+String(temperature.magnitude);
-    //lastTemperature = String.format("%d %s",temperature.value,temperature.magnitude);
+    send_ack("temperature", lastTemperature);
   }
 
   if(!humidity_queue.isEmpty()){
@@ -123,6 +132,7 @@ void loop() {
     Serial.print(humidity.value);
     Serial.println(humidity.magnitude);
     lastHumidity = String(humidity.value)+String(humidity.magnitude);
+    send_ack("humidity", lastHumidity);
   }
 
   if(!wind_queue.isEmpty()){
@@ -132,17 +142,36 @@ void loop() {
     Serial.print(wind.value);
     Serial.println(wind.magnitude);
     lastWind = String(wind.value)+String(wind.magnitude);
+    send_ack("wind", lastWind);
   }
 
   if(!screen_queue.isEmpty()){
     struct screen display = screen_queue.dequeue();
     /* Change the display type */
+    Serial.println("La screen del nintendo: ");
+    Serial.println(display.display_type);
+    if(strcmp(display.display_type, "0") == 0){
+      String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
+      String values[] = {lastTemperature,lastHumidity,lastWind};
+      drawAllDataFullScreen(headers, values);
+    }else if(strcmp(display.display_type, "1") == 0){
+      String header = "Temperatura: ";
+      String value = lastTemperature;
+      drawSingleDataFullScreen(header, value);
+    }else if(strcmp(display.display_type, "2") == 0){
+      String header = "Humedad: ";
+      String value = lastHumidity;
+      drawSingleDataFullScreen(header, value);
+    }else if(strcmp(display.display_type, "3") == 0){
+      String header = "Viento: ";
+      String value = lastWind;
+      drawSingleDataFullScreen(header, value);
+    }
   }
 
   String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
   String values[] = {lastTemperature,lastHumidity,lastWind};
   drawAllDataFullScreen(headers, values);
-  
 }
 
 
@@ -188,6 +217,15 @@ void reconnect() {
       delay(5000);
     }
   }
+}
+
+/****************************
+ *     Send ACK message     * 
+ **************************** 
+*/
+void send_ack(char* type, char* last_value){
+  snprintf(mqtt_ack, 100, "{\"data\": {\"ack_type\":\"%s\", \"last_value\": \"%s\"}}", type, last_value);
+  client.publish(mqtt_topic_ack, payload);
 }
 
 /****************************
