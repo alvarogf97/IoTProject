@@ -58,12 +58,10 @@ Our JSON structures will be:
 */
 const int sensor_json_capacity = JSON_OBJECT_SIZE(1)*3;
 const int display_json_capacity = JSON_OBJECT_SIZE(1)*2;
-const int ack_json_capacity = JSON_OBJECT_SIZE(1)*3;
 StaticJsonDocument<sensor_json_capacity> temperature_json_doc;
 StaticJsonDocument<sensor_json_capacity> humidity_json_doc;
 StaticJsonDocument<sensor_json_capacity> wind_json_doc;
 StaticJsonDocument<display_json_capacity> screen_json_doc;
-StaticJsonDocument<ack_json_capacity> ack_json_doc;
 
 /* Define Wifi settings */
 const char* wifi_ssid = "MASTER";
@@ -81,6 +79,7 @@ const char* mqtt_topic_screen = "master/GRUPOE/screen";
 const char* mqtt_topic_device = "master/GRUPOE/device";
 const char* will_message = "Godbye";
 char mqtt_message[100];
+char mqtt_ack[100];
 
 /* Define PubSub classes */
 WiFiClient espClient;
@@ -173,7 +172,6 @@ void loop() {
   String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
   String values[] = {lastTemperature,lastHumidity,lastWind};
   drawAllDataFullScreen(headers, values);
-  
 }
 
 
@@ -226,10 +224,7 @@ void reconnect() {
  **************************** 
 */
 void send_ack(char* type, char* last_value){
-  ack_json_doc["data"]["ack_type"] = type;
-  ack_json_doc["data"]["last_value"] = last_value;
-  char* payload;
-  serializeJson(ack_json_doc, payload);
+  snprintf(mqtt_ack, 100, "{\"data\": {\"ack_type\":\"%s\", \"last_value\": \"%s\"}}", type, last_value);
   client.publish(mqtt_topic_ack, payload);
 }
 
