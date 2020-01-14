@@ -7,8 +7,8 @@ This project is about the build and the development of a device which is able to
 - /master/GRUPOE/temperature
 - /master/GRUPOE/humidity
 - /master/GRUPOE/wind
-- /master/GRUPOE/screen
-
+- /master/GRUPOE/device
+- /master/GRUPOE/ack
 
 # How to install
 

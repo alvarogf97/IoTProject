@@ -7,6 +7,8 @@
 #include "SSD1306Wire.h"
 
 #define DATA_QUEUE_SIZE 10
+#define YELLOW_LED 3
+#define GREEN_LED 2
 
 SSD1306Wire display(0x3c, SDA, SCL);
 
@@ -81,6 +83,7 @@ const char* will_message = "Godbye";
 char mqtt_message[100];
 char mqtt_ack[100];
 
+
 /* Define PubSub classes */
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -92,6 +95,8 @@ String lastWind;
 
 void setup() {
   Serial.begin(9600);
+  pinMode(YELLOW_LED, OUTPUT); 
+  pinMode(GREEN_LED, OUTPUT); 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(handle_msg);
@@ -102,6 +107,7 @@ void setup() {
 
   display.flipScreenVertically();
   display.setFont(ArialMT_Plain_10);
+  digitalWrite(GREEN_LED, HIGH);
 }
 
 void loop() {
@@ -153,25 +159,35 @@ void loop() {
     if(strcmp(display.display_type, "0") == 0){
       String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
       String values[] = {lastTemperature,lastHumidity,lastWind};
-      drawAllDataFullScreen(headers, values);
+      draw_all_data_full_screen(headers, values);
     }else if(strcmp(display.display_type, "1") == 0){
       String header = "Temperatura: ";
       String value = lastTemperature;
-      drawSingleDataFullScreen(header, value);
+      draw_single_data_full_screen(header, value);
     }else if(strcmp(display.display_type, "2") == 0){
       String header = "Humedad: ";
       String value = lastHumidity;
-      drawSingleDataFullScreen(header, value);
+      draw_single_data_full_screen(header, value);
     }else if(strcmp(display.display_type, "3") == 0){
       String header = "Viento: ";
       String value = lastWind;
-      drawSingleDataFullScreen(header, value);
+      draw_single_data_full_screen(header, value);
     }
   }
 
   String headers[] = {"Temperatura: ","Humedad: ","Viento: "};
   String values[] = {lastTemperature,lastHumidity,lastWind};
-  drawAllDataFullScreen(headers, values);
+  draw_all_data_full_screen(headers, values);
+}
+
+/****************************
+ *        LED CONTROL       * 
+ **************************** 
+*/
+void alert() {
+  digitalWrite(YELLOW_LED, HIGH);
+  delay(500);
+  digitalWrite(YELLOW_LED, LOW);
 }
 
 
@@ -233,6 +249,7 @@ void send_ack(char* type, char* last_value){
  **************************** 
 */
 void handle_msg(char* topic, byte* payload, unsigned int length) {
+  alert();
   payload[length] = '\0';
   char *input = (char*)payload;
   if(strcmp(topic, mqtt_topic_temperature) == 0){
@@ -277,7 +294,7 @@ void handle_msg(char* topic, byte* payload, unsigned int length) {
  *    Show Topic data       * 
  **************************** 
 */
-void drawSingleDataFullScreen(String headerData, String valueData) {
+void draw_single_data_full_screen(String headerData, String valueData) {
     display.clear();
     display.setTextAlignment(TEXT_ALIGN_CENTER);
     display.setFont(ArialMT_Plain_16);
@@ -287,7 +304,7 @@ void drawSingleDataFullScreen(String headerData, String valueData) {
     display.display();
 }
 
-void drawAllDataFullScreen(String headersData[],String values[]) {
+void draw_all_data_full_screen(String headersData[],String values[]) {
     display.clear();
     display.setTextAlignment(TEXT_ALIGN_CENTER);
     display.setFont(ArialMT_Plain_10);
